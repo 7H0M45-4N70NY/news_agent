@@ -1,0 +1,82 @@
+# FastAPI Server Plan for News Generation Agent (V2 - Multi-Session)
+
+## 1. Overview
+
+This document outlines the architecture for a production-ready FastAPI server that serves a multi-agent news generation system built with the Google Agent Development Kit (ADK).
+
+The key objective is to provide a scalable, robust API that can handle multiple concurrent users, with each user having one or more distinct conversational sessions.
+
+## 2. Core Architecture
+
+The architecture consists of the following components:
+
+- **FastAPI Application (`app.py`):** The main entry point for the API. It defines endpoints, manages application lifecycle (startup/shutdown), and handles HTTP requests and responses.
+- **Agent Logic (`main.py`):** Contains the core functions for creating the `AgentRunner` and executing the agent chain (`call_agent_async`). This code is decoupled from the API layer to allow for independent testing and execution.
+- **Agent Definitions (`news_generation/`):** The directory containing all agent and sub-agent definitions, prompts, and tools.
+- **Shared Services:** A single, shared instance of `InMemorySessionService` and `InMemoryArtifactService` is created and managed by the FastAPI application. These services are essential for managing the state and history of all user sessions.
+
+## 3. Multi-User and Session Management Strategy
+
+To support multiple users and sessions, the system will adhere to the following principles based on Google ADK documentation:
+
+1.  **Dynamic Runner Creation:** A new `AgentRunner` instance will be created for **every incoming API request**. This is critical for conversation isolation.
+2.  **Session and User IDs from Requests:** The `/generate_news` endpoint will be designed to accept a `user_id` and an optional `session_id` from the client (e.g., via request headers or the request body). This allows clients to manage conversation continuity.
+3.  **Session Creation on Demand:**
+    - If a `session_id` is provided and exists in the `SessionService`, the runner will resume that session.
+    - If no `session_id` is provided, or if the provided ID is not found, a **new session will be created automatically** for that `user_id`.
+4.  **Centralized Service Instances:** The FastAPI app will maintain a single instance of `InMemorySessionService` and `InMemoryArtifactService`. These instances will be passed to the `create_agent_runner` function for each request, ensuring all runners interact with the same central state store.
+
+## 4. API Endpoint Definition
+
+**Endpoint:** `POST /generate_news`
+
+- **Request Body:**
+  ```json
+  {
+    "topic": "Technology",
+    "country": "USA"
+  }
+  ```
+- **Request Headers (Recommended):**
+  - `X-User-ID`: A unique identifier for the end-user.
+  - `X-Session-ID`: (Optional) The ID of an existing session to continue the conversation.
+- **Response Body (`NewsArticle` model):**
+  ```json
+  {
+    "title": "Example News Title",
+    "content": "Example news content..."
+  }
+  ```
+
+## 5. Implementation Flow for an API Call
+
+1.  A `POST` request is made to `/generate_news`.
+2.  The endpoint extracts the `user_id` and `session_id` from the headers.
+3.  It checks if the session exists. If not, it creates a new one using `session_service.create_session()`.
+4.  It calls `create_agent_runner()`, passing the shared `session_service`, `artifact_service`, and the request-specific `user_id` and `session_id`.
+5.  It calls `call_agent_async()` with the newly created runner and the user's query.
+6.  The agent chain executes, with all events being recorded in the correct session.
+7.  The final, structured `NewsArticle` JSON is returned to the client.
+
+## 6. CORS Configuration
+
+The FastAPI application will be configured with `CORSMiddleware` to allow requests from specified frontend origins. This is essential for browser-based applications.
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:3000", # Example for a local React/Vue frontend
+    "https://your-production-frontend.com",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+This plan provides a clear path to a scalable and robust news generation API.
