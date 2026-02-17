@@ -356,7 +356,8 @@
             tokenInfo.classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/generate_news`, {
+                // const response = await fetch(`${API_BASE_URL}/generate_news`, {
+                const response = await fetch("/generate_news", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ topic, country })
@@ -386,7 +387,7 @@
 
         async function fetchTokenStats() {
             try {
-                const response = await fetch(`${API_BASE_URL}/token-stats`);
+                const response = await fetch('/token-stats');
                 if (response.ok) {
                     const stats = await response.json();
                     tokenCount.textContent = stats.total_tokens.toLocaleString();
