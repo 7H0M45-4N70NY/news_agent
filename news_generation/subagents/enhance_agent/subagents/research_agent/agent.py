@@ -10,7 +10,7 @@ from .prompt import RESEARCH_AGENT_PROMPT, RESEARCH_AGENT_PROMPT_MAIN
 # Create the agent tools for research agent
 research_agent_google_search_tool = Agent(
     name="tech_research_specialist_google_search_tool",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash-lite",
     description="Expert technology researcher that gathers in-depth information on tech topics",
     instruction=RESEARCH_AGENT_PROMPT,
     tools=[google_search]
@@ -19,7 +19,7 @@ research_agent_google_search_tool = Agent(
 # Create the research agent
 research_agent = Agent(
     name="tech_research_specialist",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash-lite",
     description="Expert technology researcher that gathers in-depth information on tech topics",
     instruction=RESEARCH_AGENT_PROMPT_MAIN,
     tools=[AgentTool(research_agent_google_search_tool)]

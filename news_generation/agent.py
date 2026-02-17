@@ -20,7 +20,7 @@ class NewsArticle(BaseModel):
 # Main coordinator agent
 root_agent = Agent(
     name="new_article_creation_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash-lite",
     description="Coordinates the workflow for generating technology news articles",
     instruction=NEW_ARTICLE_GENERATION_PROMPT,
     input_schema=UserQuery,

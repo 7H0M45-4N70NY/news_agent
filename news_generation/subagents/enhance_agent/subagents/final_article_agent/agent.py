@@ -10,7 +10,7 @@ class NewsArticle(BaseModel):
 # Create the final article agent
 final_article_agent = Agent(
     name="tech_final_article_generator",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash-lite",
     description="Expert final article generator that creates concise, informative, and impactful news articles",
     instruction=FINAL_ARTICLE_GENERATION_PROMPT,
     output_schema=NewsArticle

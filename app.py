@@ -1,16 +1,42 @@
 from fastapi import FastAPI, Request, Header
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
+import logging
+import os
 
 from dotenv import load_dotenv
-from main import create_agent_runner,get_user_query_api,call_agent_async
+from main import create_agent_runner,get_user_query_api,call_agent_async,start_session_cleanup
 from google.adk.sessions import InMemorySessionService
 from google.adk.artifacts import InMemoryArtifactService
 from google.genai import types
 from news_generation.agent import UserQuery, NewsArticle
+from token_tracker import token_tracker
 import json
+
+# Disable uvicorn logs
+logging.getLogger("uvicorn").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.asgi").setLevel(logging.WARNING)
+
+# Disable verbose ADK/Gemini logs
+logging.getLogger("google.adk").setLevel(logging.WARNING)
+logging.getLogger("google.genai").setLevel(logging.WARNING)
+logging.getLogger("google.genai.client").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("google.cloud").setLevel(logging.ERROR)
+logging.getLogger("google.cloud.aiplatform").setLevel(logging.ERROR)
+
+# Configure root logger
+logging.basicConfig(
+    level=logging.WARNING,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,7 +45,11 @@ load_dotenv()
 session_service = InMemorySessionService()
 artifact_service = InMemoryArtifactService()
 
-app = FastAPI()
+app = FastAPI(title="AI News Generator", description="Generate trending news articles using AI")
+
+# Mount static files (assets folder)
+if os.path.exists("assets"):
+    app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
 # CORS Configuration
 origins = [
@@ -36,9 +66,15 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """This function is kept for potential future startup logic,
-    but session creation is now handled on-demand."""
-    pass
+    """Initialize session cleanup on startup"""
+    # Start session cleanup background thread
+    start_session_cleanup(session_service, max_age_hours=1)
+
+
+@app.get("/")
+async def serve_index():
+    """Serve the landing page"""
+    return FileResponse("index.html", media_type="text/html")
 
 
 @app.post("/generate_news", response_model=NewsArticle)
@@ -71,4 +107,16 @@ async def generate_news_article(
     
     user_query_content = get_user_query_api(input)
     final_response = await call_agent_async(user_query_content, runner, user_id, session_id)
+    
+    # Print token usage summary
+    token_tracker.print_summary()
+    
     return final_response
+
+
+@app.get("/token-stats")
+async def get_token_stats():
+    """Get token usage statistics"""
+    return token_tracker.get_summary()
+
+
