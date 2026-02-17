@@ -64,14 +64,19 @@ class TokenTracker:
     
     def get_summary(self) -> Dict:
         """Get usage summary"""
+        total_tokens = self.total_input_tokens + self.total_output_tokens
+        avg_cost = (self.total_cost / len(self.usages)) if self.usages else 0.0
+        
         return {
             "model": self.model,
             "total_input_tokens": self.total_input_tokens,
             "total_output_tokens": self.total_output_tokens,
-            "total_tokens": self.total_input_tokens + self.total_output_tokens,
-            "total_cost": f"${self.total_cost:.6f}",
+            "total_tokens": total_tokens,
+            "total_cost": round(self.total_cost, 6),
+            "total_cost_formatted": f"${self.total_cost:.6f}",
             "requests": len(self.usages),
-            "avg_cost_per_request": f"${self.total_cost / len(self.usages):.6f}" if self.usages else "$0.00"
+            "avg_cost_per_request": round(avg_cost, 6),
+            "avg_cost_per_request_formatted": f"${avg_cost:.6f}"
         }
     
     def print_summary(self) -> None:
@@ -85,8 +90,8 @@ class TokenTracker:
         print(f"Input Tokens: {summary['total_input_tokens']:,}")
         print(f"Output Tokens: {summary['total_output_tokens']:,}")
         print(f"Total Tokens: {summary['total_tokens']:,}")
-        print(f"Total Cost: {summary['total_cost']}")
-        print(f"Avg Cost/Request: {summary['avg_cost_per_request']}")
+        print(f"Total Cost: {summary['total_cost_formatted']}")
+        print(f"Avg Cost/Request: {summary['avg_cost_per_request_formatted']}")
         print("="*60 + "\n")
 
 token_tracker = TokenTracker()
