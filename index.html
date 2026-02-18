@@ -179,15 +179,58 @@
             display: block;
         }
 
-        .result h2 {
-            font-size: 1.6em;
+        .article-card {
+            background: #151515;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #222;
+            margin-bottom: 20px;
+            transition: 0.3s ease;
+        }
+
+        .article-card:hover {
+            border-color: #333;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 15px;
         }
 
-        .result p {
+        .article-card h2 {
+            font-size: 1.4em;
+            margin-bottom: 8px;
+            color: #fff;
+            flex: 1;
+        }
+
+        .article-meta {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            font-size: 0.75em;
+            color: #999;
+            margin-left: 15px;
+            white-space: nowrap;
+        }
+
+        .article-card p {
             color: #ccc;
-            line-height: 1.7;
+            line-height: 1.8;
             font-size: 0.95em;
+        }
+
+        .articles-count {
+            text-align: center;
+            color: #4a8cff;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            font-weight: 600;
         }
 
         /* Error */
@@ -296,12 +339,12 @@
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <div class="loading-text">Generating article...</div>
+            <div class="loading-text">Generating articles...</div>
         </div>
 
         <div class="result" id="result">
-            <h2 id="resultTitle"></h2>
-            <p id="resultContent"></p>
+            <div class="articles-count" id="articlesCount"></div>
+            <div id="articlesContainer"></div>
         </div>
 
         <div class="token-info" id="tokenInfo">
@@ -326,8 +369,8 @@
         const loading = document.getElementById('loading');
         const error = document.getElementById('error');
         const result = document.getElementById('result');
-        const resultTitle = document.getElementById('resultTitle');
-        const resultContent = document.getElementById('resultContent');
+        const articlesCount = document.getElementById('articlesCount');
+        const articlesContainer = document.getElementById('articlesContainer');
         const tokenInfo = document.getElementById('tokenInfo');
         const tokenCount = document.getElementById('tokenCount');
         const tokenCost = document.getElementById('tokenCost');
@@ -369,14 +412,43 @@
 
                 if (data.error) {
                     showError(data.error);
-                } else {
-                    resultTitle.textContent = data.title;
-                    resultContent.textContent = data.content;
+                } else if (data.articles && data.articles.length > 0) {
+                    // Display multiple articles
+                    articlesCount.textContent = `📰 ${data.articles.length} Article${data.articles.length > 1 ? 's' : ''} Generated`;
+                    articlesContainer.innerHTML = '';
+                    
+                    data.articles.forEach((article, index) => {
+                        const articleCard = document.createElement('div');
+                        articleCard.className = 'article-card';
+                        
+                        const header = document.createElement('div');
+                        header.className = 'article-header';
+                        
+                        const title = document.createElement('h2');
+                        title.textContent = article.title;
+                        
+                        const meta = document.createElement('span');
+                        meta.className = 'article-meta';
+                        meta.textContent = `${article.word_count} words`;
+                        
+                        header.appendChild(title);
+                        header.appendChild(meta);
+                        
+                        const content = document.createElement('p');
+                        content.textContent = article.content;
+                        
+                        articleCard.appendChild(header);
+                        articleCard.appendChild(content);
+                        articlesContainer.appendChild(articleCard);
+                    });
+                    
                     result.classList.add('show');
 
                     if (showTokensCheckbox.checked) {
                         await fetchTokenStats();
                     }
+                } else {
+                    showError('No articles generated');
                 }
             } catch (err) {
                 showError(`Failed: ${err.message}`);

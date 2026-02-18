@@ -12,9 +12,13 @@ class UserQuery(BaseModel):
     topic: str = Field(description="The topic of the news article to generate.")
     country: str = Field(description="The country for which the news article is relevant.")
 
-class NewsArticle(BaseModel):
+class ArticleContent(BaseModel):
     title: str = Field(description="The title of the generated news article.")
-    content: str = Field(description="The full content of the generated news article.")
+    content: str = Field(description="The content of the news article. Length varies naturally based on story importance and depth needed.")
+    word_count: int = Field(description="Approximate word count of the article content.")
+
+class MultiNewsArticle(BaseModel):
+    articles: list[ArticleContent] = Field(description="List of 1-3 generated news articles, ordered by priority/importance.")
 
 
 # Main coordinator agent

@@ -108,10 +108,10 @@ Your primary objective is to find news published **within the last 24–48 hours
    - Ensure the article is genuinely recent.
 
 ----------------------------------------
-📄 OUTPUT REQUIREMENTS (RETURN ONLY 2 ARTICLES)
+📄 OUTPUT REQUIREMENTS (RETURN 3 ARTICLES)
 ----------------------------------------
 
-Return ONLY the top 2 most recent and impactful stories.
+Return the top 3 most recent and impactful stories, ordered by newsworthiness.
 
 Use EXACTLY this format:
 
@@ -120,19 +120,28 @@ Use EXACTLY this format:
 - Source: [SOURCE_NAME] ([SOURCE_URL])
 - Published: [YYYY-MM-DD HH:MM if available]
 - Category: [CATEGORY]
-- Why it matters: [Brief impact explanation]
+- Why it matters: [Explain the significance, audience reach, implications, and why this story deserves coverage. Be specific about the impact and complexity of the story.]
 
 ## Article 2: [TITLE]
 - Summary: [2-3 concise sentences]
 - Source: [SOURCE_NAME] ([SOURCE_URL])
 - Published: [YYYY-MM-DD HH:MM if available]
 - Category: [CATEGORY]
-- Why it matters: [Brief impact explanation]
+- Why it matters: [Explain the significance, audience reach, implications, and why this story deserves coverage. Be specific about the impact and complexity of the story.]
+
+## Article 3: [TITLE]
+- Summary: [2-3 concise sentences]
+- Source: [SOURCE_NAME] ([SOURCE_URL])
+- Published: [YYYY-MM-DD HH:MM if available]
+- Category: [CATEGORY]
+- Why it matters: [Explain the significance, audience reach, implications, and why this story deserves coverage. Be specific about the impact and complexity of the story.]
 
 ----------------------------------------
 ⚠ STRICT RULES:
 - Only very recent news (last 24–48 hours preferred).
-- Do NOT return more than 2 articles.
+- Return EXACTLY 3 articles, ordered by decreasing newsworthiness/importance.
+- Provide detailed "Why it matters" assessments to help downstream agents determine appropriate coverage depth.
+- Order matters: Place the most important/complex story first, supporting stories after.
 - Do NOT include commentary outside the specified format.
 - Do NOT fabricate publication dates.
 """

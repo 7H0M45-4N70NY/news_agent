@@ -9,7 +9,7 @@ from google.genai import types
 from news_generation.agent import root_agent
 from custom_logger import logger
 from news_generation.agent import UserQuery
-from news_generation.subagents.enhance_agent.subagents.final_article_agent.agent import NewsArticle
+from news_generation.subagents.enhance_agent.subagents.final_article_agent.agent import MultiNewsArticle
 from token_tracker import token_tracker
 import json
 
@@ -158,22 +158,32 @@ async def call_agent_async(
             try:
                 # Try to parse as JSON
                 if isinstance(final_response_text, str):
-                    final_response_data = json.loads(final_response_text)
+                    # Strip markdown code blocks if present
+                    cleaned_text = final_response_text.strip()
+                    if cleaned_text.startswith("```json"):
+                        cleaned_text = cleaned_text[7:]  # Remove ```json
+                    elif cleaned_text.startswith("```"):
+                        cleaned_text = cleaned_text[3:]  # Remove ```
+                    if cleaned_text.endswith("```"):
+                        cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+                    cleaned_text = cleaned_text.strip()
+                    
+                    final_response_data = json.loads(cleaned_text)
                 else:
                     final_response_data = final_response_text
                 
-                # Validate against NewsArticle schema
-                news_article = NewsArticle.model_validate(final_response_data)
-                return news_article.model_dump()
+                # Validate against MultiNewsArticle schema
+                multi_news_article = MultiNewsArticle.model_validate(final_response_data)
+                return multi_news_article.model_dump()
             except json.JSONDecodeError:
                 # If not valid JSON, return error with the text received
                 logger.warning(f"Response is not valid JSON: {final_response_text[:100]}")
-                return {"error": f"Agent returned non-JSON response: {final_response_text[:200]}"}
+                return {"articles": [{"title": "Error", "content": f"Agent returned non-JSON response: {final_response_text[:200]}", "word_count": 0}]}
             except Exception as e:
                 logger.error(f"Failed to parse response: {e}")
-                return {"error": f"Failed to parse response: {str(e)}"}
+                return {"articles": [{"title": "Error", "content": f"Failed to parse response: {str(e)}", "word_count": 0}]}
         else:
-            return {"error": "No valid final response was generated."}
+            return {"articles": [{"title": "Error", "content": "No valid final response was generated.", "word_count": 0}]}
 
     except Exception as e:
         logger.error(f"Error in call_agent_async: {str(e)}")

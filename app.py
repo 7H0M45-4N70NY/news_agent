@@ -13,7 +13,7 @@ from main import create_agent_runner,get_user_query_api,call_agent_async,start_s
 from google.adk.sessions import InMemorySessionService
 from google.adk.artifacts import InMemoryArtifactService
 from google.genai import types
-from news_generation.agent import UserQuery, NewsArticle
+from news_generation.agent import UserQuery, MultiNewsArticle
 from token_tracker import token_tracker
 import json
 
@@ -77,7 +77,7 @@ async def serve_index():
     return FileResponse("index.html", media_type="text/html")
 
 
-@app.post("/generate_news", response_model=NewsArticle)
+@app.post("/generate_news", response_model=MultiNewsArticle)
 async def generate_news_article(
     input: UserQuery,
     x_user_id: str = Header("default-user"),
@@ -103,7 +103,7 @@ async def generate_news_article(
         session_id=session_id
     )
     if not runner:
-        return NewsArticle(title="Error", content="Failed to initialize agent runner.")
+        return {"articles": [{"title": "Error", "content": "Failed to initialize agent runner.", "word_count": 0}]}
     
     user_query_content = get_user_query_api(input)
     final_response = await call_agent_async(user_query_content, runner, user_id, session_id)
